@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="xar" name="tdh">
+  <xmlproperty file="expath-pkg.xml.tmpl"/>
+  <property name="project.app" value="tdh-app"/>
+  <property name="build.dir" value="build"/>
+
+  <target name="xar" depends="git.rev-count, git.short-hash">
+    <mkdir dir="${build.dir}"/>
+    <copy file="expath-pkg.xml.tmpl" tofile="expath-pkg.xml" filtering="true" overwrite="true">
+      <filterset>
+        <filter token="project.version" value="${git.rev-count}"/>
+      </filterset>
+    </copy>
+    <copy file="repo.xml.tmpl" tofile="repo.xml" filtering="true" overwrite="true">
+      <filterset>
+        <filter token="git.short-hash" value="${git.short-hash}"/>
+      </filterset>
+    </copy>
+
+    <zip basedir="." destfile="${build.dir}/${project.app}-${git.rev-count}.xar" excludes="${build.dir}/*"/>
+  </target>
+
+  <available file=".git" type="dir" property="git.present"/>
+
+  <target name="git.rev-count" description="Calculate the number of commits." if="git.present">
+    <exec executable="git" outputproperty="git.rev-count" failifexecutionfails="fail">
+      <arg value="rev-list"/>
+      <arg value="--count"/>
+      <arg value="HEAD"/>
+    </exec>
+    <condition property="git.rev-count" value="${git.rev-count}" else="unknown">
+      <and>
+        <isset property="git.rev-count"/>
+      </and>
+    </condition>
+  </target>
+
+  <target name="git.short-hash" description="Extract short commit hash string." if="git.present">
+    <exec executable="git" outputproperty="git.short-hash" failifexecutionfails="false" errorproperty="">
+      <arg value="rev-parse"/>
+      <arg value="--short"/>
+      <arg value="HEAD"/>
+    </exec>
+    <condition property="git.short-hash" value="${git.short-hash}" else="unknown">
+      <and>
+        <isset property="git.short-hash"/>
+      </and>
+    </condition>
+  </target>
+</project>
